@@ -33,37 +33,44 @@ button{font:inherit;color:inherit;cursor:pointer}
 .op:hover:not(:disabled){border-color:var(--ac)}.op.ok{background:var(--ok);color:#fff;border-color:var(--ok)}.op.no{background:var(--no);color:#fff;border-color:var(--no)}
 .ans{background:var(--bg);border:2px solid var(--ac);border-radius:12px;padding:12px;font-size:22px;font-weight:700;margin-bottom:12px}.aw{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}.aw button{border:2px solid var(--c,var(--bd));background:var(--cd);border-radius:10px;padding:8px 14px;font-weight:600}@media(max-width:420px){.opts{grid-template-columns:1fr}}
 .rk{background:var(--cd);border:1px solid var(--bd);border-inline-start:6px solid var(--c);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;font-weight:700}
+
+html:root:root{--bg:#0b0b1a;--cd:#14142b;--tx:#e8e8ff;--mu:#9a9ac8;--bd:#2a2a55;--ac:#2de2e6;--c0:#ff4d8d;--c1:#2de2e6;--c2:#b6ff3b;--c3:#ffb020;--ok:#b6ff3b;--no:#ff4d8d;color-scheme:dark}
+h1{color:var(--ac);text-shadow:0 0 14px var(--ac)}
+.tile{background:var(--cd);color:var(--c);border:1px solid var(--c);box-shadow:0 0 10px -2px var(--c),inset 0 0 8px -4px var(--c);text-shadow:0 0 8px var(--c)}
+.tile.dn{background:transparent;color:transparent;border:1px dashed var(--bd);box-shadow:none;text-shadow:none}
+.hd{border:1px solid var(--c);border-top-width:3px;box-shadow:0 0 10px -4px var(--c)}
+.sc.act,.tm.act{box-shadow:0 0 14px -3px var(--c)}
+.sub[data-o]{box-shadow:0 0 10px -2px var(--c)}
+.go{background:transparent;color:var(--ac);border:2px solid var(--ac);box-shadow:0 0 14px -2px var(--ac);text-shadow:0 0 6px var(--ac)}
+.go:disabled{box-shadow:none;text-shadow:none}
+.ov{background:rgba(5,5,15,.85)}
+.md{border:1px solid var(--ac);box-shadow:0 0 30px -6px var(--ac)}
+.op.ok{background:transparent;color:var(--ok);border-color:var(--ok);box-shadow:0 0 12px -2px var(--ok)}
+.op.no{background:transparent;color:var(--no);border-color:var(--no);box-shadow:0 0 12px -2px var(--no)}
+.ans{border-color:var(--ac);box-shadow:0 0 12px -4px var(--ac)}
+.aw button:hover,.chip.on{box-shadow:0 0 10px -2px var(--ac)}
 </style></head><body><div id="app"></div>
+<script src="questions.js"></script>
 <script>
 // Format per question: 'السؤال|الإجابة الصحيحة|خطأ1|خطأ2|خطأ3'. Each subject: 3 easy, 3 medium, 2 hard (add more to each tier for more variety).
-const S=[
-['التاريخ','🏛️',['من بنى أهرامات الجيزة؟|المصريون القدماء|الرومان|اليونانيون|الفرس','في أي عام انتهت الحرب العالمية الثانية؟|1945|1939|1918|1950','من أول رئيس للولايات المتحدة؟|جورج واشنطن|أبراهام لنكولن|توماس جيفرسون|بنجامين فرانكلين','من القائد الذي هُزم في معركة واترلو؟|نابليون بونابرت|يوليوس قيصر|الإسكندر الأكبر|هانيبال','في أي عام سقط جدار برلين؟|1989|1979|1991|1961','من مؤسس الإمبراطورية المغولية؟|جنكيز خان|تيمور لنك|قوبلاي خان|أتيلا','في أي عام فتح محمد الفاتح القسطنطينية؟|1453|1492|1258|1517','من مؤسس الدولة الأموية؟|معاوية بن أبي سفيان|عبد الملك بن مروان|أبو العباس السفاح|هارون الرشيد']],
-['الجغرافيا','🌍',['ما عاصمة فرنسا؟|باريس|ليون|مرسيليا|نيس','ما أكبر محيط في العالم؟|المحيط الهادئ|الأطلسي|الهندي|المتجمد الشمالي','في أي قارة تقع مصر؟|أفريقيا|آسيا|أوروبا|أمريكا الجنوبية','ما عاصمة أستراليا؟|كانبرا|سيدني|ملبورن|بيرث','ما أطول نهر في أفريقيا؟|النيل|الكونغو|النيجر|الزامبيزي','في أي دولة يقع جبل كليمنجارو؟|تنزانيا|كينيا|أوغندا|إثيوبيا','ما عاصمة كازاخستان؟|أستانا|ألماتي|طشقند|بيشكك','أي مضيق يفصل بين أوروبا وآسيا في إسطنبول؟|البوسفور|جبل طارق|هرمز|باب المندب']],
-['الرياضة','🏅',['كم عدد الحلقات في علم الأولمبياد؟|5|4|6|7','في أي رياضة تُقام بطولة ويمبلدون؟|التنس|الغولف|الكريكيت|البولو','كم لاعباً من كل فريق في ملعب كرة السلة؟|5|6|7|11','أي دولة استضافت أولمبياد 2016؟|البرازيل|الصين|بريطانيا|اليابان','كم طول سباق الماراثون؟|42.195 كم|21 كم|50 كم|35 كم','من صاحب الرقم القياسي العالمي في سباق 100 متر؟|أوسين بولت|كارل لويس|تايسون غاي|جاستن غاتلين','أي مدينة استضافت أولمبياد 1992؟|برشلونة|أتلانتا|سيدني|سيول','كم لقب عالم في الفورمولا 1 فاز به لويس هاميلتون؟|7|5|6|8']],
-['كرة القدم','⚽',['كم لاعباً في كل فريق على أرض الملعب؟|11|10|9|12','من فاز بكأس العالم 2022؟|الأرجنتين|فرنسا|البرازيل|كرواتيا','من اللاعب الملقب بـ CR7؟|كريستيانو رونالدو|ليونيل ميسي|نيمار|مبابي','من فاز بكأس العالم 2018؟|فرنسا|كرواتيا|ألمانيا|بلجيكا','أي نادٍ يلعب على ملعب كامب نو؟|برشلونة|ريال مدريد|أتلتيكو مدريد|إشبيلية','أي منتخب فاز بكأس العالم أكثر من غيره؟|البرازيل|ألمانيا|إيطاليا|الأرجنتين','من هداف كأس العالم عبر التاريخ؟|ميروسلاف كلوزه|رونالدو الظاهرة|غيرد مولر|بيليه','أي منتخب فاز ببطولة أمم أوروبا 2004؟|اليونان|البرتغال|التشيك|هولندا']],
-['الأنمي','🍥',['من بطل أنمي ناروتو؟|ناروتو أوزوماكي|ساسكي|كاكاشي|إيتاتشي','ما نوع بوكيمون بيكاتشو؟|كهربائي|ناري|مائي|عشبي','في أي أنمي يظهر غوكو؟|دراغون بول|ون بيس|بليتش|ناروتو','من قبطان قراصنة قبعة القش؟|مونكي دي لوفي|زورو|سانجي|أيس','من بطل أنمي هجوم العمالقة؟|إيرين ييغر|ليفاي|ميكاسا|أرمين','أي استوديو ياباني أنتج فيلم «المخطوفة» (Spirited Away)؟|ستوديو غيبلي|توي أنيميشن|مابا|بونز','ما اسم الشينيغامي المرتبط بلايت ياغامي في ديث نوت؟|ريوك|ريم|أوبون|بيرك','ما اسم والد غون في هنتر × هنتر؟|جينغ|كايتو|بيسكي|ليوريو']],
-['الأفلام','🎬',['من أخرج فيلم تايتانيك؟|جيمس كاميرون|ستيفن سبيلبرغ|كريستوفر نولان|ريدلي سكوت','أي فيلم رسوم متحركة بطله الأسد سيمبا؟|الأسد الملك|بامبي|مدغشقر|كونغ فو باندا','ما اسم مدرسة السحر في هاري بوتر؟|هوغورتس|دورمستراغ|بوباتون|إلفيرموني','من أخرج فيلم الحديقة الجوراسية؟|ستيفن سبيلبرغ|جورج لوكاس|جيمس كاميرون|روبرت زيميكس','أي فيلم كوري فاز بأوسكار أفضل فيلم عام 2020؟|طفيلي|أولد بوي|قطار بوسان|مينارِي','من مثّل شخصية جاك سبارو؟|جوني ديب|براد بيت|أورلاندو بلوم|توم كروز','من أخرج فيلم بالب فيكشن؟|كوينتن تارانتينو|مارتن سكورسيزي|ديفيد فينشر|ستانلي كوبريك','ما اسم الزلاجة في فيلم المواطن كين؟|روزبد|سنو|كلوفر|بيبي']],
-['المسلسلات','📺',['أي مسلسل بطله والتر وايت؟|بريكنغ باد|صراع العروش|لوست|ذا واير','أي مسلسل تدور أحداثه في مدينة هوكنز وفيه فتاة اسمها إيليفين؟|ستراينجر ثينغز|دارك|ذا فلاش|لوست','أي مسلسل يظهر فيه العرش الحديدي؟|صراع العروش|فايكنغز|ذا كراون|ذا ويتشر','ما اسم المقهى في مسلسل فريندز؟|سنترال بيرك|مكلارين|كوزي كورنر|ذا بيرك','أي مسلسل كوري تدور أحداثه حول ألعاب أطفال قاتلة؟|لعبة الحبار|كينغدوم|ذا غلوري|ألِس إن بوردرلاند','أي مسلسل تدور أحداثه في شركة دندر ميفلن؟|ذا أوفيس|بارك آند ريك|بروكلين ناين-ناين|ذا بلايس','من مبتكر مسلسل بريكنغ باد؟|فينس غيليغان|ديفيد تشيس|مات وينر|جورج آر. آر. مارتن','ما اسم سيف جون سنو؟|لونغكلو|آيس|نيدل|أوثكيبر']],
-['العلوم','🔬',['ما الصيغة الكيميائية للماء؟|H2O|CO2|O2|NaCl','ما أقرب كوكب إلى الشمس؟|عطارد|الزهرة|المريخ|الأرض','كم عدد كواكب المجموعة الشمسية؟|8|9|7|10','أي غاز تمتصه النباتات في عملية البناء الضوئي؟|ثاني أكسيد الكربون|الأكسجين|النيتروجين|الهيدروجين','ما الرمز الكيميائي للذهب؟|Au|Ag|Fe|Gd','من صاحب النظرية النسبية؟|ألبرت أينشتاين|إسحاق نيوتن|نيلز بور|غاليليو','ما العنصر الذي عدده الذري 26؟|الحديد|النحاس|الزنك|الكوبالت','من مكتشف البنسلين؟|ألكسندر فليمنغ|لويس باستور|ماري كوري|روبرت كوخ']],
-['ثقافة عامة','💡',['كم يوماً في السنة الكبيسة؟|366|365|364|367','كم عدد القارات؟|7|5|6|8','ما أكبر حيوان ثديي في العالم؟|الحوت الأزرق|الفيل|الزرافة|الدب القطبي','كم عدد أوتار الغيتار القياسي؟|6|4|5|7','ما عملة اليابان؟|الين|اليوان|الوون|الرينغيت','ما اللغة الأكثر انتشاراً بين الناطقين الأصليين؟|الصينية (الماندرين)|الإنجليزية|الإسبانية|الهندية','كم عدد عظام جسم الإنسان البالغ؟|206|212|198|250','أي دولة أهدت تمثال الحرية للولايات المتحدة؟|فرنسا|بريطانيا|إسبانيا|ألمانيا']],
-['الموسيقى','🎵',['من يُلقب بملك البوب؟|مايكل جاكسون|إلفيس بريسلي|برنس|جاستن بيبر','أي آلة موسيقية لها مفاتيح بيضاء وسوداء؟|البيانو|الكمان|العود|الطبل','أي فرقة غنت «Bohemian Rhapsody»؟|كوين|البيتلز|ليد زيبلين|رولينغ ستونز','من أي مدينة جاءت فرقة البيتلز؟|ليفربول|لندن|مانشستر|برمنغهام','من غنّت «Rolling in the Deep»؟|أديل|بيونسيه|تايلور سويفت|ريهانا','من ألّف «الفصول الأربعة»؟|فيفالدي|موزارت|باخ|شوبان','من ألّف السيمفونية التاسعة؟|بيتهوفن|موزارت|شوبرت|برامس','ما الاسم الحقيقي للمغني إمينيم؟|مارشال ماذرز|كورتيس جاكسون|أندريه يونغ|شون كارتر']],
-['التكنولوجيا','💻',['أي شركة تصنع هاتف آيفون؟|آبل|سامسونغ|هواوي|سوني','أي نظام تشغيل للهواتف تصنعه غوغل؟|أندرويد|iOS|ويندوز|لينكس','ما اسم متصفح الإنترنت من غوغل؟|كروم|فايرفوكس|سفاري|إيدج','من مؤسس شركة مايكروسوفت؟|بيل غيتس|ستيف جوبز|إيلون ماسك|مارك زوكربيرغ','ما اللغة المستخدمة لبناء هيكل صفحات الويب؟|HTML|Python|SQL|C++','ما اختصار وحدة المعالجة المركزية؟|CPU|GPU|RAM|SSD','في أي عام أُطلق أول آيفون؟|2007|2005|2010|2003','من مخترع شبكة الويب العالمية؟|تيم بيرنرز-لي|فينت سيرف|لاري بيج|بيل غيتس']],
-['الألعاب','🎮',['ما اسم القنفذ الأزرق السريع في ألعاب الفيديو؟|سونيك|ماريو|كراش|ريمان','أي لعبة تُبنى فيها العوالم من المكعبات؟|ماينكرافت|فورتنايت|فيفا|كاونتر سترايك','أي شخصية ذات قبعة حمراء وشارب في ألعاب نينتندو؟|ماريو|لينك|سونيك|بيكاتشو','أي شركة طورت لعبة فورتنايت؟|إيبك غيمز|فالف|بليزارد|أوبيسوفت','ما اسم بطلة لعبة تومب رايدر؟|لارا كروفت|سامس آران|أيلوي|كلوي','من بطل سلسلة ألعاب زيلدا؟|لينك|ماريو|سيفروث|كلاود','في أي عام صدرت النسخة الكاملة من ماينكرافت؟|2011|2009|2013|2015','من مبتكر شخصية ماريو؟|شيغيرو مياموتو|هيديو كوجيما|ساتوشي تاجيري|جون كارمك']]
-];
+const S=(window.QUESTIONS||[]).map(s=>[s.n,s.e,s.q]);
 const PTS=[100,200,300,400,500,600],COL=['var(--c0)','var(--c1)','var(--c2)','var(--c3)'],MAXT=Math.floor(S.length/3);
 let st={n:2,names:['الفريق 1','الفريق 2','الفريق 3','الفريق 4'],pick:[[],[],[],[]],cur:0,screen:'setup'},g=null;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let seen=new Set();try{seen=new Set(JSON.parse(localStorage.getItem('seenQ')||'[]'))}catch(e){}
+function saveSeen(){try{localStorage.setItem('seenQ',JSON.stringify([...seen]))}catch(e){}}
+function resetSeen(){seen=new Set();saveSeen();alert('تمت إعادة ضبط الأسئلة المعروضة')}
 function setN(k){st.n=k;if(st.cur>=k)st.cur=0;for(let t=k;t<4;t++)st.pick[t]=[];R()}
 function tog(i){const o=st.pick.findIndex((p,t)=>t<st.n&&p.includes(i));
  if(o>=0){st.pick[o]=st.pick[o].filter(x=>x!=i);st.cur=o}
  else if(st.pick[st.cur].length<3){st.pick[st.cur].push(i);if(st.pick[st.cur].length==3){const nx=[...Array(st.n).keys()].find(t=>st.pick[t].length<3);if(nx!=null)st.cur=nx}}
  R()}
 function begin(){const cols=[];
- for(let t=0;t<st.n;t++)for(const s of st.pick[t]){const q=S[s][2].map(x=>{const a=x.split('|');return{q:a[0],c:a[1],o:sh(a.slice(1))}});
-  const items=[...sh(q.slice(0,3)).slice(0,2),...sh(q.slice(3,6)).slice(0,2),...sh(q.slice(6))].map((x,i)=>({...x,p:PTS[i],done:false}));
+ for(let t=0;t<st.n;t++)for(const s of st.pick[t]){const q=S[s][2].map(x=>{const a=x.split('|');return{id:s+':'+a[1],l:+a[0],q:a[1],c:a[2],o:sh(a.slice(2))}});const used=new Set();
+  const items=PTS.map((p,i)=>{let pool=q.filter(x=>x.l==i+1&&!used.has(x.id));if(!pool.length)pool=q.filter(x=>!used.has(x.id));let f=pool.filter(x=>!seen.has(x.id));if(!f.length){pool.forEach(x=>seen.delete(x.id));f=pool}const x=sh(f)[0];used.add(x.id);seen.add(x.id);return{...x,p,done:false}});
   cols.push({t,s,items})}
- g={cols,scores:Array(st.n).fill(0),turn:0,open:null,tried:[],shown:false};st.screen='play';R()}
+ saveSeen();g={cols,scores:Array(st.n).fill(0),turn:0,open:null,tried:[],shown:false};st.screen='play';R()}
 function openQ(c,r){g.open={c,r};g.tried=[];g.shown=false;R()}
 function pickO(o){const it=g.cols[g.open.c].items[g.open.r];if(!g.tried.includes(o))g.tried.push(o);if(o==it.c)g.shown=true;R()}
 function award(t){const it=g.cols[g.open.c].items[g.open.r];if(t>=0)g.scores[t]+=it.p;it.done=true;g.turn=(g.turn+1)%st.n;g.open=null;g.tried=[];g.shown=false;
@@ -75,7 +82,7 @@ function setup(){const own=i=>st.pick.findIndex((p,t)=>t<st.n&&p.includes(i));
  <div class="row">عدد الفرق: ${Array.from({length:MAXT-1},(_,i)=>i+2).map(k=>`<button class="chip ${st.n==k?'on':''}" onclick="setN(${k})">${k}</button>`).join('')}</div>
  <div class="teams">${[...Array(st.n)].map((_,t)=>`<div class="tm ${st.cur==t?'act':''}" style="--c:${COL[t]}" onclick="st.cur=${t};R()"><input value="${esc(st.names[t])}" onclick="event.stopPropagation()" onchange="st.names[${t}]=this.value||'الفريق ${t+1}';R()"><small>${st.pick[t].length}/3 مواضيع${st.cur==t?' · يختار الآن':''}</small></div>`).join('')}</div>
  <div class="grid">${S.map((s,i)=>{const o=own(i);return `<button class="sub" ${o>=0?`style="--c:${COL[o]}" data-o="1"`:''} onclick="tog(${i})"><span>${s[1]}</span>${s[0]}${o>=0?`<small>${esc(st.names[o])}</small>`:''}</button>`}).join('')}</div>
- <button class="go" ${ready?'':'disabled'} onclick="begin()">ابدأ اللعبة</button>`}
+ <button class="go" ${ready?'':'disabled'} onclick="begin()">ابدأ اللعبة</button><br><button class="lk" onclick="resetSeen()">إعادة ضبط الأسئلة المعروضة</button>`}
 function play(){let m='';
  if(g.open){const c=g.cols[g.open.c],it=c.items[g.open.r],mc=it.p==500;
   m=`<div class="ov"><div class="md"><small class="mu">${S[c.s][1]} ${S[c.s][0]} · ${it.p} نقطة · الدور على ${esc(st.names[g.turn])}</small><h2>${esc(it.q)}</h2>${mc?`<div class="opts">${it.o.map(o=>`<button class="op ${g.tried.includes(o)?(o==it.c?'ok':'no'):(g.shown&&o==it.c?'ok':'')}" ${g.tried.includes(o)||g.shown?'disabled':''} data-o="${esc(o)}" onclick="pickO(this.dataset.o)">${esc(o)}</button>`).join('')}</div>`:''}${g.shown?`${mc?'':`<div class="ans">${esc(it.c)}</div>`}<p class="mu">من يحصل على النقاط؟</p><div class="aw">${g.scores.map((_,t)=>`<button style="--c:${COL[t]}" onclick="award(${t})">${esc(st.names[t])}</button>`).join('')}<button onclick="award(-1)">لا أحد</button></div>`:`${g.tried.length?'<p class="mu">إجابة خاطئة! يمكن لفريق آخر أن يسرق النقاط</p>':''}<button class="go" onclick="g.shown=true;R()">إظهار الإجابة</button>`}<br><button class="lk" onclick="g.open=null;R()">العودة إلى اللوحة</button></div></div>`}
@@ -88,6 +95,6 @@ function end(){const r=g.scores.map((s,t)=>({s,t})).sort((a,b)=>b.s-a.s),top=r.f
  return `<h1>انتهت اللعبة</h1><h2>${top.length>1?'تعادل بين: '+top.map(x=>esc(st.names[x.t])).join(' و '):'🏆 الفائز: '+esc(st.names[top[0].t])}</h2>
  ${r.map(x=>`<div class="rk" style="--c:${COL[x.t]}"><span>${esc(st.names[x.t])}</span><span>${x.s}</span></div>`).join('')}
  <div class="row" style="margin-top:16px"><button class="go" onclick="begin()">إعادة بنفس المواضيع (أسئلة جديدة)</button><button class="chip" onclick="newGame()">لعبة جديدة</button></div>`}
-function R(){document.getElementById('app').innerHTML=st.screen=='setup'?setup():st.screen=='play'?play():end()}
+function R(){if(!S.length){document.getElementById('app').innerHTML='<h1>ملف الأسئلة questions.js غير موجود</h1>';return}document.getElementById('app').innerHTML=st.screen=='setup'?setup():st.screen=='play'?play():end()}
 R();
 </script></body></html>
