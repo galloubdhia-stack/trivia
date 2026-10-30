@@ -50,15 +50,17 @@ h1{color:var(--tx)}
 .op.no{background:color-mix(in srgb,var(--no) 22%,var(--cd));color:var(--tx);border-color:var(--no);box-shadow:none}
 .ans{border-color:var(--ac);box-shadow:none}
 .aw button:hover{box-shadow:none}
-</style></head><body><div id="app"></div>
+.bn{padding:8px;border-radius:8px;font-weight:700;margin-bottom:10px}.bn.rk{background:color-mix(in srgb,var(--no) 22%,var(--cd));border:1px solid var(--no)}.bn.sk{background:color-mix(in srgb,var(--c3) 22%,var(--cd));border:1px solid var(--c3)}.cl{text-align:right;padding-inline-start:24px}.cl li{margin-bottom:6px}.md input{font:inherit;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px;text-align:center}.md label{font-size:13px}</style></head><body><div id="app"></div>
 <script src="questions.js"></script>
 <script>
 // Format per question: 'السؤال|الإجابة الصحيحة|خطأ1|خطأ2|خطأ3'. Each subject: 3 easy, 3 medium, 2 hard (add more to each tier for more variety).
-const S=(window.QUESTIONS||[]).map(s=>[s.n,s.e,s.q]);
-const PTS=[100,200,300,400,500,600],COL=['var(--c0)','var(--c1)','var(--c2)','var(--c3)'],MAXT=Math.floor(S.length/3);
-let st={n:2,names:['الفريق 1','الفريق 2','الفريق 3','الفريق 4'],pick:[[],[],[],[]],cur:0,screen:'setup'},g=null;
+const S=(window.QUESTIONS||[]).map(s=>[s.n,s.e,s.q]),WHO=window.WHO||[],NUM=window.NUM||[],TF=window.TF||[];
+const PTS=[100,200,300,400,500,600],COL=['var(--c0)','var(--c1)','var(--c2)','var(--c3)'],MAXT=Math.floor(S.length/3),BR=[1,3,5];
+let st={n:2,names:['الفريق 1','الفريق 2','الفريق 3','الفريق 4'],pick:[[],[],[],[]],cur:0,screen:'setup'},g=null,tm=null;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const col=c=>c.t<0?'var(--ac)':COL[c.t],hintOf=a=>a.startsWith('ال')&&a.length>2?'ال'+a[2]:a[0];
+const cur=()=>{const c=g.cols[g.open.c];return[c,c.items[g.open.r]]},ep=it=>it.p*(g.dbl[g.turn]&&!it.k?2:1),whoPts=()=>cur()[1].p*(6-g.clue)/5;
 let seen=new Set();try{seen=new Set(JSON.parse(localStorage.getItem('seenQ')||'[]'))}catch(e){}
 function saveSeen(){try{localStorage.setItem('seenQ',JSON.stringify([...seen]))}catch(e){}}
 function resetSeen(){seen=new Set();saveSeen();alert('تمت إعادة ضبط الأسئلة المعروضة')}
@@ -70,32 +72,56 @@ function tog(i){const o=st.pick.findIndex((p,t)=>t<st.n&&p.includes(i));
 function begin(){const cols=[];
  for(let t=0;t<st.n;t++)for(const s of st.pick[t]){const q=S[s][2].map(x=>{const a=x.split('|');return{id:s+':'+a[1],l:+a[0],q:a[1],c:a[2],o:sh(a.slice(2))}});const used=new Set();
   const items=PTS.map((p,i)=>{let pool=q.filter(x=>x.l==i+1&&!used.has(x.id));if(!pool.length)pool=q.filter(x=>!used.has(x.id));let f=pool.filter(x=>!seen.has(x.id));if(!f.length){pool.forEach(x=>seen.delete(x.id));f=pool}const x=sh(f)[0];used.add(x.id);seen.add(x.id);return{...x,p,done:false}});
-  cols.push({t,s,items})}
- saveSeen();g={cols,scores:Array(st.n).fill(0),turn:0,open:null,tried:[],shown:false};st.screen='play';R()}
-function openQ(c,r){g.open={c,r};g.tried=[];g.shown=false;R()}
-function pickO(o){const it=g.cols[g.open.c].items[g.open.r];if(!g.tried.includes(o))g.tried.push(o);if(o==it.c)g.shown=true;R()}
-function award(t){const it=g.cols[g.open.c].items[g.open.r];if(t>=0)g.scores[t]+=it.p;it.done=true;g.turn=(g.turn+1)%st.n;g.open=null;g.tried=[];g.shown=false;
- if(g.cols.every(c=>c.items.every(i=>i.done)))st.screen='end';R()}
-function newGame(){st.pick=[[],[],[],[]];st.cur=0;st.screen='setup';R()}
+  cols.push({t,s,items,pool:q})}
+ for(let t=0;t<st.n;t++)sh(cols.filter(c=>c.t==t).flatMap(c=>c.items))[0].risk=t;
+ const bw=sh(WHO).slice(0,3).map(x=>x.split('|')),bn=sh(NUM).slice(0,3).map(x=>x.split('|'));
+ if(bw.length)cols.push({t:-1,n:'من أنا؟',e:'🕵️',items:PTS.map((p,r)=>{const i=BR.indexOf(r);return i<0||!bw[i]?null:{k:'who',a:bw[i][0],cl:bw[i].slice(1),p,done:false}})});
+ if(bn.length)cols.push({t:-1,n:'خمّن الرقم',e:'🔢',items:PTS.map((p,r)=>{const i=BR.indexOf(r);return i<0||!bn[i]?null:{k:'num',q:bn[i][0],a:+bn[i][1],u:bn[i][2]||'',p,done:false}})});
+ saveSeen();g={cols,scores:Array(st.n).fill(0),turn:0,open:null,tried:[],shown:false,clue:1,rw:false,numRes:null,ld:false,inv:Array.from({length:st.n},()=>({h:true,s:true})),streak:Array(st.n).fill(0),dbl:Array(st.n).fill(false),turns:Array(st.n).fill(0)};st.screen='play';R()}
+function openQ(c,r){g.open={c,r};g.tried=[];g.shown=false;g.clue=1;g.rw=false;g.numRes=null;R()}
+function pickO(o){const it=cur()[1];if(!g.tried.includes(o))g.tried.push(o);if(o==it.c)g.shown=true;R()}
+function use5(t){const it=cur()[1];g.inv[t].h=false;it.h5=true;if(it.p==500)it.keep=sh(it.o.filter(x=>x!=it.c)).slice(0,1);R()}
+function skipQ(){const[c,it]=cur(),r=g.open.r,t=g.turn;if(!g.inv[t].s)return;const cand=c.pool.filter(x=>x.l==r+1&&!c.items.some(i=>i&&i.id==x.id));if(!cand.length){alert('لا يوجد سؤال بديل في هذا المستوى');return}const f=cand.filter(x=>!seen.has(x.id)),x=sh(f.length?f:cand)[0];seen.add(x.id);saveSeen();c.items[r]={...x,p:it.p,done:false,risk:it.risk};g.inv[t].s=false;g.tried=[];g.shown=false;R()}
+function chk(){if(g.cols.every(c=>c.items.every(i=>!i||i.done)))st.screen='end';R()}
+function finish(){cur()[1].done=true;g.turns[g.turn]++;g.turn=(g.turn+1)%st.n;g.open=null;g.tried=[];g.shown=false;g.rw=false;if(!g.ld&&g.turns.every(x=>x>=10)){startL();return}chk()}
+function award(t){const it=cur()[1],T=g.turn;if(t>=0)g.scores[t]+=ep(it);
+ if(!it.k&&!g.rw){if(g.dbl[T]){g.dbl[T]=false;g.streak[T]=0}else if(t==T){if(++g.streak[T]>=5){g.streak[T]=0;g.dbl[T]=true}}else g.streak[T]=0}
+ finish()}
+function riskWrong(){const it=cur()[1],T=g.turn;g.scores[T]-=ep(it);g.streak[T]=0;g.dbl[T]=false;g.rw=true;R()}
+function awardWho(t){if(t>=0)g.scores[t]+=whoPts();finish()}
+function guessNum(){const it=cur()[1],v=[...Array(st.n)].map((_,t)=>parseFloat(String(document.getElementById('g'+t).value).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace('٫','.')));
+ if(v.some(isNaN)){alert('أدخل رقماً لكل فريق');return}const d=v.map(x=>Math.abs(x-it.a)),m=Math.min(...d),w=d.map((x,i)=>x==m?i:-1).filter(i=>i>=0);w.forEach(i=>g.scores[i]+=it.p);g.numRes={v,w};R()}
+function startL(){g.L={t:0,i:0,left:60,run:false,seq:sh(TF),sc:Array(st.n).fill(0),sh:false};st.screen='light';R()}
+function lgo(){g.L.run=true;g.L.left=60;clearInterval(tm);tm=setInterval(()=>{g.L.left--;if(g.L.left<=0)lend();else R()},1000);R()}
+function lend(){clearInterval(tm);const L=g.L;g.scores[L.t]+=L.sc[L.t];L.run=false;if(L.t+1<st.n){L.t++;L.left=60;R()}else{g.ld=true;st.screen='play';chk()}}
+function lans(ok){const L=g.L;if(ok)L.sc[L.t]+=50;L.i++;L.sh=false;R()}
 function setup(){const own=i=>st.pick.findIndex((p,t)=>t<st.n&&p.includes(i));
  const ready=st.pick.slice(0,st.n).every(p=>p.length==3);
- return `<h1>تحدي المعلومات</h1><p class="mu">يختار كل فريق 3 مواضيع. لكل موضوع 6 أسئلة بنقاط من 100 إلى 600 (سؤال الـ500 فقط باختيار متعدد)، وبعد الإجابة الخاطئة يمكن لفريق آخر السرقة. تتغير الأسئلة عشوائياً مع كل لعبة جديدة.</p>
+ return `<h1>تحدي المعلومات</h1><p class="mu">يختار كل فريق 3 مواضيع. لكل موضوع 6 أسئلة بنقاط من 100 إلى 600، مع أعمدة إضافية للجميع: «من أنا؟» و«خمّن الرقم»، وجولة خاطفة بعد 10 أسئلة لكل فريق.</p>
  <div class="row">عدد الفرق: ${Array.from({length:MAXT-1},(_,i)=>i+2).map(k=>`<button class="chip ${st.n==k?'on':''}" onclick="setN(${k})">${k}</button>`).join('')}</div>
  <div class="teams">${[...Array(st.n)].map((_,t)=>`<div class="tm ${st.cur==t?'act':''}" style="--c:${COL[t]}" onclick="st.cur=${t};R()"><input value="${esc(st.names[t])}" onclick="event.stopPropagation()" onchange="st.names[${t}]=this.value||'الفريق ${t+1}';R()"><small>${st.pick[t].length}/3 مواضيع${st.cur==t?' · يختار الآن':''}</small></div>`).join('')}</div>
  <div class="grid">${S.map((s,i)=>{const o=own(i);return `<button class="sub" ${o>=0?`style="--c:${COL[o]}" data-o="1"`:''} onclick="tog(${i})"><span>${s[1]}</span>${s[0]}${o>=0?`<small>${esc(st.names[o])}</small>`:''}</button>`}).join('')}</div>
  <button class="go" ${ready?'':'disabled'} onclick="begin()">ابدأ اللعبة</button><br><button class="lk" onclick="resetSeen()">إعادة ضبط الأسئلة المعروضة</button>`}
-function play(){let m='';
- if(g.open){const c=g.cols[g.open.c],it=c.items[g.open.r],mc=it.p==500;
-  m=`<div class="ov"><div class="md"><small class="mu">${S[c.s][1]} ${S[c.s][0]} · ${it.p} نقطة · الدور على ${esc(st.names[g.turn])}</small><h2>${esc(it.q)}</h2>${mc?`<div class="opts">${it.o.map(o=>`<button class="op ${g.tried.includes(o)?(o==it.c?'ok':'no'):(g.shown&&o==it.c?'ok':'')}" ${g.tried.includes(o)||g.shown?'disabled':''} data-o="${esc(o)}" onclick="pickO(this.dataset.o)">${esc(o)}</button>`).join('')}</div>`:''}${g.shown?`${mc?'':`<div class="ans">${esc(it.c)}</div>`}<p class="mu">من يحصل على النقاط؟</p><div class="aw">${g.scores.map((_,t)=>`<button style="--c:${COL[t]}" onclick="award(${t})">${esc(st.names[t])}</button>`).join('')}<button onclick="award(-1)">لا أحد</button></div>`:`${g.tried.length?'<p class="mu">إجابة خاطئة! يمكن لفريق آخر أن يسرق النقاط</p>':''}<button class="go" onclick="g.shown=true;R()">إظهار الإجابة</button>`}<br><button class="lk" onclick="g.open=null;R()">العودة إلى اللوحة</button></div></div>`}
- return `<div class="score">${g.scores.map((s,t)=>`<div class="sc ${g.turn==t?'act':''}" style="--c:${COL[t]}"><small>${g.turn==t?'◂ دوره الآن':''}</small><b>${esc(st.names[t])}</b><span>${s}</span></div>`).join('')}</div>
+const rowT=(f,extra)=>`<div class="aw">${g.scores.map((_,t)=>g.rw&&t==g.turn?'':`<button style="--c:${COL[t]}" onclick="${f}(${t})">${esc(st.names[t])}</button>`).join('')}<button onclick="${f}(-1)">لا أحد</button>${extra||''}</div>`;
+function modal(){const[c,it]=cur(),T=g.turn,e=ep(it),mc=!it.k&&it.p==500;let b='';
+ const sub=it.k=='who'?'🕵️ من أنا؟':it.k=='num'?'🔢 خمّن الرقم':S[c.s][1]+' '+S[c.s][0];
+ if(it.k=='who')b=`<h2>من أنا؟</h2><ol class="cl">${it.cl.slice(0,g.clue).map(x=>`<li>${esc(x)}</li>`).join('')}</ol>${g.clue<5?`<button class="go" onclick="g.clue++;R()">الدليل التالي</button>`:''}<p class="mu">النقاط الآن: ${whoPts()}</p>${g.shown?`<div class="ans">${esc(it.a)}</div>`:`<button class="lk" onclick="g.shown=true;R()">إظهار الإجابة</button>`}<p class="mu">من عرف الإجابة؟</p>${rowT('awardWho')}`;
+ else if(it.k=='num')b=`<h2>${esc(it.q)}</h2>`+(g.numRes?`<div class="ans">${it.a} ${esc(it.u)}</div><p class="mu">${g.numRes.v.map((x,t)=>esc(st.names[t])+': '+x).join(' · ')}</p><p>الأقرب: ${g.numRes.w.map(t=>esc(st.names[t])).join(' و ')} (+${it.p})</p><button class="go" onclick="finish()">التالي</button>`:`<div class="aw">${[...Array(st.n)].map((_,t)=>`<label style="--c:${COL[t]}">${esc(st.names[t])}<br><input id="g${t}" inputmode="decimal" style="width:90px"></label>`).join('')}</div><br><button class="go" onclick="guessNum()">احسب الأقرب</button>`);
+ else{const ops=mc?`<div class="opts">${it.o.filter(o=>!(it.h5&&o!=it.c&&!(it.keep||[]).includes(o))).map(o=>`<button class="op ${g.tried.includes(o)?(o==it.c?'ok':'no'):(g.shown&&o==it.c?'ok':'')}" ${g.tried.includes(o)||g.shown?'disabled':''} data-o="${esc(o)}" onclick="pickO(this.dataset.o)">${esc(o)}</button>`).join('')}</div>`:'';
+  const tools=!g.shown?`<div class="aw" style="margin-bottom:10px">${it.h5?'':g.inv.map((v,t)=>v.h?`<button class="chip" style="--c:${COL[t]}" onclick="use5(${t})">50/50 · ${esc(st.names[t])}</button>`:'').join('')}${g.inv[T].s&&!g.tried.length?`<button class="chip" onclick="skipQ()">تبديل السؤال</button>`:''}</div>`:'';
+  b=`${it.risk===T?`<div class="bn rk">⚠️ سؤال مخاطرة: الخطأ يخصم ${e} نقطة</div>`:''}${g.dbl[T]?`<div class="bn sk">🔥 سؤال ستريك: النقاط مضاعفة ×2</div>`:''}<h2>${esc(it.q)}</h2>${it.h5&&!mc?`<p class="mu">تلميح: ${esc(hintOf(it.c))}…</p>`:''}${ops}${tools}`+(g.shown?`${mc?'':`<div class="ans">${esc(it.c)}</div>`}<p class="mu">من حصل على النقاط؟ (${e})</p>${rowT('award',it.risk===T&&!g.rw?`<button style="--c:var(--no)" onclick="riskWrong()">أخطأ ${esc(st.names[T])} (−${e})</button>`:'')}`:`<button class="go" onclick="g.shown=true;R()">إظهار الإجابة</button>`)}
+ return `<div class="ov"><div class="md"><small class="mu">${sub} · ${it.p} نقطة · الدور على ${esc(st.names[T])}</small>${b}<br><button class="lk" onclick="g.open=null;R()">العودة إلى اللوحة</button></div></div>`}
+function play(){return `<div class="score">${g.scores.map((s,t)=>`<div class="sc ${g.turn==t?'act':''}" style="--c:${COL[t]}"><small>${g.turn==t?'◂ دوره الآن':''}</small><b>${esc(st.names[t])}</b><span>${s}</span><small>🔥 ${g.streak[t]}/5${g.dbl[t]?' · ×2 قادم':''}</small><small>${g.inv[t].h?'50/50 ':''}${g.inv[t].s?'· تبديل':''}</small></div>`).join('')}</div>
  <div class="bw"><div class="bd" style="grid-template-columns:repeat(${g.cols.length},minmax(96px,1fr))">
- ${g.cols.map(c=>`<div class="hd" style="--c:${COL[c.t]}"><span>${S[c.s][1]}</span>${S[c.s][0]}<small>${esc(st.names[c.t])}</small></div>`).join('')}
- ${PTS.map((_,r)=>g.cols.map((c,ci)=>{const it=c.items[r];return `<button class="tile ${it.done?'dn':''}" style="--c:${COL[c.t]}" ${it.done?'disabled':''} onclick="openQ(${ci},${r})">${it.p}</button>`}).join('')).join('')}
- </div></div>${m}`}
+ ${g.cols.map(c=>`<div class="hd" style="--c:${col(c)}"><span>${c.t<0?c.e:S[c.s][1]}</span>${c.t<0?c.n:S[c.s][0]}<small>${c.t<0?'للجميع':esc(st.names[c.t])}</small></div>`).join('')}
+ ${PTS.map((_,r)=>g.cols.map((c,ci)=>{const it=c.items[r];return it?`<button class="tile ${it.done?'dn':''}" style="--c:${col(c)}" ${it.done?'disabled':''} onclick="openQ(${ci},${r})">${it.k=='who'?'؟ ':it.k=='num'?'# ':''}${it.p}</button>`:'<div></div>'}).join('')).join('')}
+ </div></div>${g.open?modal():''}`}
+function light(){const L=g.L,t=L.t,q=L.seq[L.i%L.seq.length].split('|');
+ return `<h1>⚡ الجولة الخاطفة</h1><p class="mu">صح أم خطأ · دقيقة لكل فريق · +50 لكل إجابة صحيحة · المقدّم هو الحَكَم</p><div class="sc" style="--c:${COL[t]};margin-bottom:12px"><b>${esc(st.names[t])}</b><span>${L.sc[t]}</span></div>`+(L.run?`<div class="md" style="margin:0 auto"><h1>${L.left}</h1><h2>${esc(q[0])}</h2>${L.sh?`<div class="ans">${q[1]=='1'?'صحيح':'خطأ'}</div>`:`<button class="lk" onclick="g.L.sh=true;R()">إظهار الإجابة للمقدّم</button>`}<div class="aw"><button style="--c:var(--ok)" onclick="lans(true)">إجابة صحيحة +50</button><button style="--c:var(--no)" onclick="lans(false)">إجابة خاطئة</button></div><br><button class="lk" onclick="lend()">إنهاء الدور</button></div>`:`<button class="go" onclick="lgo()">ابدأ دقيقة ${esc(st.names[t])}</button>`)}
 function end(){const r=g.scores.map((s,t)=>({s,t})).sort((a,b)=>b.s-a.s),top=r.filter(x=>x.s==r[0].s);
  return `<h1>انتهت اللعبة</h1><h2>${top.length>1?'تعادل بين: '+top.map(x=>esc(st.names[x.t])).join(' و '):'🏆 الفائز: '+esc(st.names[top[0].t])}</h2>
  ${r.map(x=>`<div class="rk" style="--c:${COL[x.t]}"><span>${esc(st.names[x.t])}</span><span>${x.s}</span></div>`).join('')}
- <div class="row" style="margin-top:16px"><button class="go" onclick="begin()">إعادة بنفس المواضيع (أسئلة جديدة)</button><button class="chip" onclick="newGame()">لعبة جديدة</button></div>`}
-function R(){if(!S.length){document.getElementById('app').innerHTML='<h1>ملف الأسئلة questions.js غير موجود</h1>';return}document.getElementById('app').innerHTML=st.screen=='setup'?setup():st.screen=='play'?play():end()}
+ <div class="row" style="margin-top:16px"><button class="go" onclick="begin()">إعادة بنفس المواضيع (أسئلة جديدة)</button><button class="chip" onclick="st.pick=[[],[],[],[]];st.cur=0;st.screen='setup';R()">لعبة جديدة</button></div>`}
+function R(){if(!S.length){document.getElementById('app').innerHTML='<h1>ملف الأسئلة questions.js غير موجود</h1>';return}document.getElementById('app').innerHTML=st.screen=='setup'?setup():st.screen=='play'?play():st.screen=='light'?light():end()}
 R();
 </script></body></html>
