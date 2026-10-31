@@ -77,13 +77,13 @@ function begin(){const cols=[];
  const bw=sh(WHO).slice(0,3).map(x=>x.split('|')),bn=sh(NUM).slice(0,3).map(x=>x.split('|'));
  if(bw.length)cols.push({t:-1,n:'من أنا؟',e:'🕵️',items:PTS.map((p,r)=>{const i=BR.indexOf(r);return i<0||!bw[i]?null:{k:'who',a:bw[i][0],cl:bw[i].slice(1),p,done:false}})});
  if(bn.length)cols.push({t:-1,n:'خمّن الرقم',e:'🔢',items:PTS.map((p,r)=>{const i=BR.indexOf(r);return i<0||!bn[i]?null:{k:'num',q:bn[i][0],a:+bn[i][1],u:bn[i][2]||'',p,done:false}})});
- saveSeen();g={cols,scores:Array(st.n).fill(0),turn:0,open:null,tried:[],shown:false,clue:1,rw:false,numRes:null,ld:false,inv:Array.from({length:st.n},()=>({h:true,s:true})),streak:Array(st.n).fill(0),dbl:Array(st.n).fill(false),turns:Array(st.n).fill(0)};st.screen='play';R()}
+ saveSeen();g={cols,scores:Array(st.n).fill(0),turn:0,open:null,tried:[],shown:false,clue:1,rw:false,numRes:null,lt:Array(st.n).fill(false),inv:Array.from({length:st.n},()=>({h:true,s:true})),streak:Array(st.n).fill(0),dbl:Array(st.n).fill(false),turns:Array(st.n).fill(0)};st.screen='play';R()}
 function openQ(c,r){g.open={c,r};g.tried=[];g.shown=false;g.clue=1;g.rw=false;g.numRes=null;R()}
 function pickO(o){const it=cur()[1];if(!g.tried.includes(o))g.tried.push(o);if(o==it.c)g.shown=true;R()}
 function use5(t){const it=cur()[1];g.inv[t].h=false;it.h5=true;if(it.p==500)it.keep=sh(it.o.filter(x=>x!=it.c)).slice(0,1);R()}
 function skipQ(){const[c,it]=cur(),r=g.open.r,t=g.turn;if(!g.inv[t].s)return;const cand=c.pool.filter(x=>x.l==r+1&&!c.items.some(i=>i&&i.id==x.id));if(!cand.length){alert('لا يوجد سؤال بديل في هذا المستوى');return}const f=cand.filter(x=>!seen.has(x.id)),x=sh(f.length?f:cand)[0];seen.add(x.id);saveSeen();c.items[r]={...x,p:it.p,done:false,risk:it.risk};g.inv[t].s=false;g.tried=[];g.shown=false;R()}
 function chk(){if(g.cols.every(c=>c.items.every(i=>!i||i.done)))st.screen='end';R()}
-function finish(){cur()[1].done=true;g.turns[g.turn]++;g.turn=(g.turn+1)%st.n;g.open=null;g.tried=[];g.shown=false;g.rw=false;if(!g.ld&&g.turns.every(x=>x>=10)){startL();return}chk()}
+function finish(){const T=g.turn;cur()[1].done=true;g.turns[T]++;g.turn=(T+1)%st.n;g.open=null;g.tried=[];g.shown=false;g.rw=false;if(!g.lt[T]&&g.turns[T]>=10){g.lt[T]=true;startL(T);return}chk()}
 function award(t){const it=cur()[1],T=g.turn;if(t>=0)g.scores[t]+=ep(it);
  if(!it.k&&!g.rw){if(g.dbl[T]){g.dbl[T]=false;g.streak[T]=0}else if(t==T){if(++g.streak[T]>=5){g.streak[T]=0;g.dbl[T]=true}}else g.streak[T]=0}
  finish()}
@@ -91,9 +91,9 @@ function riskWrong(){const it=cur()[1],T=g.turn;g.scores[T]-=ep(it);g.streak[T]=
 function awardWho(t){if(t>=0)g.scores[t]+=whoPts();finish()}
 function guessNum(){const it=cur()[1],v=[...Array(st.n)].map((_,t)=>parseFloat(String(document.getElementById('g'+t).value).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace('٫','.')));
  if(v.some(isNaN)){alert('أدخل رقماً لكل فريق');return}const d=v.map(x=>Math.abs(x-it.a)),m=Math.min(...d),w=d.map((x,i)=>x==m?i:-1).filter(i=>i>=0);w.forEach(i=>g.scores[i]+=it.p);g.numRes={v,w};R()}
-function startL(){g.L={t:0,i:0,left:60,run:false,seq:sh(TF),sc:Array(st.n).fill(0),sh:false};st.screen='light';R()}
+function startL(t){g.L={t,i:0,left:60,run:false,seq:sh(TF),sc:Array(st.n).fill(0),sh:false};st.screen='light';R()}
 function lgo(){g.L.run=true;g.L.left=60;clearInterval(tm);tm=setInterval(()=>{g.L.left--;if(g.L.left<=0)lend();else R()},1000);R()}
-function lend(){clearInterval(tm);const L=g.L;g.scores[L.t]+=L.sc[L.t];L.run=false;if(L.t+1<st.n){L.t++;L.left=60;R()}else{g.ld=true;st.screen='play';chk()}}
+function lend(){clearInterval(tm);const L=g.L;g.scores[L.t]+=L.sc[L.t];L.run=false;st.screen='play';chk()}
 function lans(ok){const L=g.L;if(ok)L.sc[L.t]+=50;L.i++;L.sh=false;R()}
 function setup(){const own=i=>st.pick.findIndex((p,t)=>t<st.n&&p.includes(i));
  const ready=st.pick.slice(0,st.n).every(p=>p.length==3);
@@ -117,7 +117,7 @@ function play(){return `<div class="score">${g.scores.map((s,t)=>`<div class="sc
  ${PTS.map((_,r)=>g.cols.map((c,ci)=>{const it=c.items[r];return it?`<button class="tile ${it.done?'dn':''}" style="--c:${col(c)}" ${it.done?'disabled':''} onclick="openQ(${ci},${r})">${it.k=='who'?'؟ ':it.k=='num'?'# ':''}${it.p}</button>`:'<div></div>'}).join('')).join('')}
  </div></div>${g.open?modal():''}`}
 function light(){const L=g.L,t=L.t,q=L.seq[L.i%L.seq.length].split('|');
- return `<h1>⚡ الجولة الخاطفة</h1><p class="mu">صح أم خطأ · دقيقة لكل فريق · +50 لكل إجابة صحيحة · المقدّم هو الحَكَم</p><div class="sc" style="--c:${COL[t]};margin-bottom:12px"><b>${esc(st.names[t])}</b><span>${L.sc[t]}</span></div>`+(L.run?`<div class="md" style="margin:0 auto"><h1>${L.left}</h1><h2>${esc(q[0])}</h2>${L.sh?`<div class="ans">${q[1]=='1'?'صحيح':'خطأ'}</div>`:`<button class="lk" onclick="g.L.sh=true;R()">إظهار الإجابة للمقدّم</button>`}<div class="aw"><button style="--c:var(--ok)" onclick="lans(true)">إجابة صحيحة +50</button><button style="--c:var(--no)" onclick="lans(false)">إجابة خاطئة</button></div><br><button class="lk" onclick="lend()">إنهاء الدور</button></div>`:`<button class="go" onclick="lgo()">ابدأ دقيقة ${esc(st.names[t])}</button>`)}
+ return `<h1>⚡ الجولة الخاطفة</h1><p class="mu">صح أم خطأ · دقيقة لهذا الفريق · +50 لكل إجابة صحيحة · المقدّم هو الحَكَم</p><div class="sc" style="--c:${COL[t]};margin-bottom:12px"><b>${esc(st.names[t])}</b><span>${L.sc[t]}</span></div>`+(L.run?`<div class="md" style="margin:0 auto"><h1>${L.left}</h1><h2>${esc(q[0])}</h2><div class="ans">${q[1]=='1'?'صحيح':'خطأ'}</div><div class="aw"><button style="--c:var(--ok)" onclick="lans(true)">إجابة صحيحة +50</button><button style="--c:var(--no)" onclick="lans(false)">إجابة خاطئة</button></div><br><button class="lk" onclick="lend()">إنهاء الدور</button></div>`:`<button class="go" onclick="lgo()">ابدأ دقيقة ${esc(st.names[t])}</button>`)}
 function end(){const r=g.scores.map((s,t)=>({s,t})).sort((a,b)=>b.s-a.s),top=r.filter(x=>x.s==r[0].s);
  return `<h1>انتهت اللعبة</h1><h2>${top.length>1?'تعادل بين: '+top.map(x=>esc(st.names[x.t])).join(' و '):'🏆 الفائز: '+esc(st.names[top[0].t])}</h2>
  ${r.map(x=>`<div class="rk" style="--c:${COL[x.t]}"><span>${esc(st.names[x.t])}</span><span>${x.s}</span></div>`).join('')}
